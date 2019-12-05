@@ -1,0 +1,26 @@
+@charset "utf-8";
+
+@import "../../node_modules/bulma/sass/utilities/initial-variables";
+@import "../../node_modules/bulma/sass/utilities/functions";
+
+// paul prefers green
+$primary: #00979d;
+$blue: #00979d;
+$fa-font-path: "fonts" !default;
+
+@import "../../node_modules/bulma/bulma";
+
+// paul prefers smaller fonts ;)
+html {
+    font-size: 10px;
+
+    @include tablet {
+        font-size: 12px;
+    }
+
+    @include desktop {
+        font-size: 12px;
+    }
+}
+
+@import "../../node_modules/font-awesome/scss/font-awesome";
