@@ -16,8 +16,6 @@ export interface MyAppState {
     invert: boolean;
     width: number;
     height: number;
-    toGreyScale: boolean;
-    truncateBits: number;
     code: string;
 }
 
@@ -30,11 +28,9 @@ export class MyApp extends React.Component<{}, MyAppState> {
     constructor(props: {}, state: MyAppState) {
         super(props, state);
         this.onChange = this.onChange.bind(this);
-        this.setTruncateBits = this.setTruncateBits.bind(this);
+        this.canvas2Code = this.canvas2Code.bind(this);
 
         this.state = {
-            toGreyScale: true,
-            truncateBits: 5,
             invert: false,
             width: 800,
             height: 600,
@@ -71,20 +67,23 @@ export class MyApp extends React.Component<{}, MyAppState> {
                             }
                         }
 
-                        if (this.state.toGreyScale) {
+                        const toGrayScale = (truncateBits: 4 | 5) => {
                             for (let i = 0; i < imgData.data.length; i += 4) {
                                 // 256 is 8 bit
                                 // 16 is 4 bit
                                 // 256/16 = 16
                                 const avgValue = (imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2]) / 3;
-                                const avg4BitValue = (avgValue >>> this.state.truncateBits) << this.state.truncateBits;
+                                const avg4BitValue = (avgValue >>> truncateBits) << truncateBits;
                                 imgData.data[i] = avg4BitValue;
                                 imgData.data[i + 1] = avg4BitValue;
                                 imgData.data[i + 2] = avg4BitValue;
                                 imgData.data[i + 3] = 255;
                             }
-                        }
+                        };
 
+                        toGrayScale(4);
+                        this.canvas2Code(imgData);
+                        toGrayScale(5);
                         this.ctx.putImageData(imgData, 0, 0);
                     }
                 }
@@ -96,14 +95,28 @@ export class MyApp extends React.Component<{}, MyAppState> {
         }
     }
 
-    setTruncateBits(truncateBits: number) {
-        this.setState({ truncateBits });
-        console.log("Set truncateBits to", truncateBits);
-    }
-
     editorDidMount: EditorDidMount = (editor, monaco) => {
         console.log("editorDidMount", editor);
         editor.focus();
+    }
+
+    canvas2Code(imgData: ImageData) {
+        let values = [];
+        // assumption: image is already greyscale
+        for (let i = 0; i < imgData.data.length; i += 8) {
+            const value = (imgData.data[i] & 0b11110000) + ((imgData.data[i + 4]) >>> 4);
+            values.push("0x" + (value).toString(16));
+        }
+
+        const code = "#ifndef IMG_H"
+            + "\n#define IMG_H"
+            + "\nconst uint8_t img PROGMEM[240000] = {"
+            + "\n" + values.join(", \n")
+            + "\n};"
+            + "\n#endif";
+
+        console.log("done");
+        this.setState({ code });
     }
 
     render() {
@@ -122,15 +135,6 @@ export class MyApp extends React.Component<{}, MyAppState> {
                                                 this.fileInput = c;
                                             }
                                         }} />
-                                    </Field>
-                                    <Field>
-                                        <Label>Target Bit-ness:</Label>
-                                        <Control>
-                                            <Select>
-                                                <option onClick={() => this.setTruncateBits(5)} selected={this.state.truncateBits === 5}>3-bit (as 4-bit)</option>
-                                                <option onClick={() => this.setTruncateBits(4)} selected={this.state.truncateBits === 4}>4-bit</option>
-                                            </Select>
-                                        </Control>
                                     </Field>
                                     <img src="" width="240" height="180" ref={c => {
                                         if (c) {
