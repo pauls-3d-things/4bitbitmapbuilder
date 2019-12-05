@@ -1,7 +1,7 @@
 {
-  "name": "3bit-image",
+  "name": "4bit-image",
   "version": "1.0.0",
-  "description": "Creating 3-bit images.",
+  "description": "Creating 4-bit images.",
   "main": "index.js",
   "repository": {
     "type": "git",

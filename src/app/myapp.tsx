@@ -4,8 +4,6 @@ import PanelHeading from "bloomer/lib/components/Panel/PanelHeading";
 import PanelBlock from "bloomer/lib/components/Panel/PanelBlock";
 import Field from "bloomer/lib/elements/Form/Field/Field";
 import Label from "bloomer/lib/elements/Form/Label";
-import Control from "bloomer/lib/elements/Form/Control";
-import Select from "bloomer/lib/elements/Form/Select";
 import Section from "bloomer/lib/layout/Section";
 import Container from "bloomer/lib/layout/Container";
 import Column from "bloomer/lib/grid/Column";
