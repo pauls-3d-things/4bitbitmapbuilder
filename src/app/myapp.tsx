@@ -10,6 +10,7 @@ import Section from "bloomer/lib/layout/Section";
 import Container from "bloomer/lib/layout/Container";
 import Column from "bloomer/lib/grid/Column";
 import Columns from "bloomer/lib/grid/Columns";
+import MonacoEditor, { EditorDidMount } from "react-monaco-editor";
 
 export interface MyAppState {
     invert: boolean;
@@ -17,6 +18,7 @@ export interface MyAppState {
     height: number;
     toGreyScale: boolean;
     truncateBits: number;
+    code: string;
 }
 
 export class MyApp extends React.Component<{}, MyAppState> {
@@ -35,7 +37,8 @@ export class MyApp extends React.Component<{}, MyAppState> {
             truncateBits: 5,
             invert: false,
             width: 800,
-            height: 600
+            height: 600,
+            code: "// Please load an image to see the code"
         };
     }
 
@@ -98,6 +101,11 @@ export class MyApp extends React.Component<{}, MyAppState> {
         console.log("Set truncateBits to", truncateBits);
     }
 
+    editorDidMount: EditorDidMount = (editor, monaco) => {
+        console.log("editorDidMount", editor);
+        editor.focus();
+    }
+
     render() {
         return (
             <Section>
@@ -143,6 +151,19 @@ export class MyApp extends React.Component<{}, MyAppState> {
                                 </Column>
                             </Columns>
                         </PanelBlock>
+                    </Panel>
+                    <Panel>
+                        <PanelHeading>Code Preview</PanelHeading>
+                        <PanelBlock>
+                            <MonacoEditor
+                                width="800"
+                                height="600"
+                                language="javascript"
+                                theme="vs-light"
+                                value={this.state.code}
+                                options={{}}
+                                editorDidMount={this.editorDidMount}
+                            /></PanelBlock>
                     </Panel>
                 </Container>
             </Section >
