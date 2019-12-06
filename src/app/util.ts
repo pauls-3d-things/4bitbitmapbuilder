@@ -19,7 +19,7 @@ export const invert = (imgData: ImageData) => {
 };
 
 // assumption: image is already greyscale
-export const toCode = (imgData: ImageData): string => {
+export const toCode = (imgData: ImageData, imgCounter: number, origName: string, width: number, height: number): string => {
     let values = [];
     for (let i = 0; i < imgData.data.length; i += 8) {
         const value = (imgData.data[i] & 0b11110000) + ((imgData.data[i + 4]) >>> 4);
@@ -28,9 +28,12 @@ export const toCode = (imgData: ImageData): string => {
 
     // TODO: convert to x values per row
 
-    const code = "#ifndef IMG_H"
-        + "\n#define IMG_H"
-        + "\nconst uint8_t img PROGMEM[240000] = {"
+    const code = "#ifndef IMG_" + imgCounter + "_H"
+        + "\n#define IMG_" + imgCounter + "_H"
+        + "\n// " + origName
+        + "\n#define IMG_" + imgCounter + "_WIDTH " + width
+        + "\n#define IMG_" + imgCounter + "_HEIGHT " + height
+        + "\nconst uint8_t img" + imgCounter + " PROGMEM[" + (imgData.data.length / 8) + "] = {" // div by 8  because div by 4 to get to pixels, and two pixels per byte
         + "\n" + values.join(", \n") // some editors don't like long lines
         + "\n};"
         + "\n#endif";

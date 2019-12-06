@@ -24,6 +24,7 @@
   "author": "Paul Smith <code@uvwxy.de>",
   "license": "ISC",
   "devDependencies": {
+    "@types/file-saver": "^2.0.1",
     "@types/react": "^16.0.36",
     "@types/react-dom": "^16.0.3",
     "bloomer": "^0.6.5",
@@ -32,6 +33,7 @@
     "cpx": "^1.5.0",
     "css-loader": "^3.2.1",
     "cssmin": "^0.4.3",
+    "file-saver": "^2.0.2",
     "font-awesome": "^4.7.0",
     "fork-ts-checker-webpack-plugin": "^0.4.0",
     "mkdirp": "^0.5.1",

@@ -10,7 +10,8 @@ import Section from "bloomer/lib/layout/Section";
 import Container from "bloomer/lib/layout/Container";
 import Column from "bloomer/lib/grid/Column";
 import Columns from "bloomer/lib/grid/Columns";
-import { toAvgGrayScale, invert, ditherFloydSteinberg } from "./util";
+import { toAvgGrayScale, invert, ditherFloydSteinberg, toCode } from "./util";
+import { saveAs } from "file-saver";
 
 export interface Size {
     width: number;
@@ -18,7 +19,6 @@ export interface Size {
 }
 
 export interface MyAppState {
-    code: string;
     invert: boolean;
     dither: boolean;
     simulate3Bit: boolean;
@@ -26,6 +26,8 @@ export interface MyAppState {
 
     origSize?: Size;
     targetSize: Size;
+
+    imgCounter: number;
 }
 
 export class MyApp extends React.Component<{}, MyAppState> {
@@ -33,6 +35,7 @@ export class MyApp extends React.Component<{}, MyAppState> {
     ctx: CanvasRenderingContext2D | null = null;
     img?: HTMLImageElement;
     fileInput: HTMLInputElement | null = null;
+    fileName: string | null = null;
 
     constructor(props: {}, state: MyAppState) {
         super(props, state);
@@ -46,6 +49,7 @@ export class MyApp extends React.Component<{}, MyAppState> {
         this.changeX = this.changeX.bind(this);
         this.changeY = this.changeY.bind(this);
         this.sizeToImage = this.sizeToImage.bind(this);
+        this.saveImgH = this.saveImgH.bind(this);
 
         this.state = {
             invert: false,
@@ -53,7 +57,7 @@ export class MyApp extends React.Component<{}, MyAppState> {
             simulate3Bit: true,
             scale: true,
             targetSize: { width: 800, height: 600 },
-            code: "// Please load an image to see the code"
+            imgCounter: 1
         };
     }
 
@@ -79,6 +83,7 @@ export class MyApp extends React.Component<{}, MyAppState> {
 
         if (this.img && this.fileInput && this.fileInput.files) {
             const file = this.fileInput.files[0];
+            this.fileName = file.name;
             const reader = new FileReader();
 
             reader.addEventListener("load", () => {
@@ -112,6 +117,15 @@ export class MyApp extends React.Component<{}, MyAppState> {
         if (this.img && this.img.width && this.img.height) {
             this.setState({ targetSize: { width: this.img.width, height: this.img.height } });
             setTimeout(this.drawCanvas, 1000);
+        }
+    }
+
+    saveImgH() {
+        if (this.ctx) {
+            const imgData = this.ctx.getImageData(0, 0, this.state.targetSize.width, this.state.targetSize.height);
+            const code = toCode(imgData, this.state.imgCounter, this.fileName ? this.fileName : "N/A", this.state.targetSize.width, this.state.targetSize.height);
+            saveAs(new Blob([code]), "img" + this.state.imgCounter + ".h");
+            this.setState((prev: MyAppState, props: {}) => ({ imgCounter: prev.imgCounter + 1 }));
         }
     }
 
@@ -186,7 +200,7 @@ export class MyApp extends React.Component<{}, MyAppState> {
                                     <Field>
                                         <Label>Output Options:</Label>
                                         <Control>
-                                            Output size: <button onClick={this.sizeToImage}>to Img</button><br />
+                                            Output size: <button onClick={this.sizeToImage}>to Image</button><br />
                                             <input style={{ width: "4em" }} type="number" value={this.state.targetSize.width} onChange={this.changeX}></input>
                                             x<input style={{ width: "4em" }} type="number" value={this.state.targetSize.height} onChange={this.changeY}></input><br />
                                             <br />
@@ -196,6 +210,13 @@ export class MyApp extends React.Component<{}, MyAppState> {
                                             <Checkbox onClick={this.toggleSimulate3Bit} checked={this.state.simulate3Bit}> Simulate 3-bit</Checkbox>
                                         </Control>
                                     </Field>
+                                    {this.ctx ?
+                                        <Field>
+                                            <Label>Save:</Label>
+                                            <Control>
+                                                <button onClick={this.saveImgH} >img{this.state.imgCounter}.h</button>
+                                            </Control>
+                                        </Field> : ""}
                                 </Column>
                                 <Column isSize="2/3">
                                     <canvas width={this.state.targetSize ? this.state.targetSize.width : ""}
@@ -223,5 +244,5 @@ export class MyApp extends React.Component<{}, MyAppState> {
                 </Container>
             </Section >
         );
-        }
+    }
 }
