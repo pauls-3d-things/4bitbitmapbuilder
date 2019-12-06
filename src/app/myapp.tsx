@@ -10,7 +10,7 @@ import Section from "bloomer/lib/layout/Section";
 import Container from "bloomer/lib/layout/Container";
 import Column from "bloomer/lib/grid/Column";
 import Columns from "bloomer/lib/grid/Columns";
-import { toAvgGrayScale, invert, ditherFloydSteinberg, toCode } from "./util";
+import { toAvgGrayScale, invert, ditherFloydSteinberg } from "./util";
 
 export interface Size {
     width: number;
@@ -22,10 +22,9 @@ export interface MyAppState {
     invert: boolean;
     dither: boolean;
     simulate3Bit: boolean;
-    scaleDown: boolean;
+    scale: boolean;
 
     origSize?: Size;
-    canvasSize?: Size;
     targetSize: Size;
 }
 
@@ -41,34 +40,37 @@ export class MyApp extends React.Component<{}, MyAppState> {
         this.preview = this.preview.bind(this);
         this.toggleInvert = this.toggleInvert.bind(this);
         this.toggleDither = this.toggleDither.bind(this);
-        this.toggleScaleDown = this.toggleScaleDown.bind(this);
+        this.toggleScale = this.toggleScale.bind(this);
         this.toggleSimulate3Bit = this.toggleSimulate3Bit.bind(this);
-        this.draw = this.draw.bind(this);
+        this.drawCanvas = this.drawCanvas.bind(this);
+        this.changeX = this.changeX.bind(this);
+        this.changeY = this.changeY.bind(this);
+        this.sizeToImage = this.sizeToImage.bind(this);
 
         this.state = {
             invert: false,
             dither: true,
             simulate3Bit: true,
-            scaleDown: true,
+            scale: true,
             targetSize: { width: 800, height: 600 },
             code: "// Please load an image to see the code"
         };
     }
 
     toggleInvert() {
-        this.setState((prev: MyAppState, props: {}) => ({ invert: !prev.invert }), this.draw);
+        this.setState((prev: MyAppState, props: {}) => ({ invert: !prev.invert }), this.drawCanvas);
     }
 
     toggleDither() {
-        this.setState((prev: MyAppState, props: {}) => ({ dither: !prev.dither }), this.draw);
+        this.setState((prev: MyAppState, props: {}) => ({ dither: !prev.dither }), this.drawCanvas);
     }
 
     toggleSimulate3Bit() {
-        this.setState((prev: MyAppState, props: {}) => ({ simulate3Bit: !prev.simulate3Bit }), this.draw);
+        this.setState((prev: MyAppState, props: {}) => ({ simulate3Bit: !prev.simulate3Bit }), this.drawCanvas);
     }
 
-    toggleScaleDown() {
-        this.setState((prev: MyAppState, props: {}) => ({ scaleDown: !prev.scaleDown }), this.draw);
+    toggleScale() {
+        this.setState((prev: MyAppState, props: {}) => ({ scale: !prev.scale }), this.drawCanvas);
     }
 
     onChange(event: React.ChangeEvent) {
@@ -85,8 +87,7 @@ export class MyApp extends React.Component<{}, MyAppState> {
 
                     // grab meta data
                     this.setState({
-                        origSize: { width: this.img.width, height: this.img.height },
-                        canvasSize: this.state.targetSize
+                        origSize: { width: this.img.width, height: this.img.height }
                     });
                 }
             }, false);
@@ -94,6 +95,23 @@ export class MyApp extends React.Component<{}, MyAppState> {
             if (file) {
                 reader.readAsDataURL(file);
             }
+        }
+    }
+
+    changeX(event: React.ChangeEvent<HTMLInputElement>) {
+        const width: number = parseInt(event.target.value, 10);
+        this.setState({ targetSize: { width, height: this.state.targetSize.height } });
+    }
+
+    changeY(event: React.ChangeEvent<HTMLInputElement>) {
+        const height: number = parseInt(event.target.value, 10);
+        this.setState({ targetSize: { height, width: this.state.targetSize.width } });
+    }
+
+    sizeToImage() {
+        if (this.img && this.img.width && this.img.height) {
+            this.setState({ targetSize: { width: this.img.width, height: this.img.height } });
+            setTimeout(this.drawCanvas, 1000);
         }
     }
 
@@ -115,11 +133,11 @@ export class MyApp extends React.Component<{}, MyAppState> {
         return imgData;
     }
 
-    draw() {
+    drawCanvas() {
         if (this.img && this.ctx) {
 
             console.log("drawing");
-            if (this.state.scaleDown) {
+            if (this.state.scale) {
                 this.ctx.drawImage(this.img, 0, 0, this.state.targetSize.width, this.state.targetSize.height);
                 const origImageData = this.ctx.getImageData(0, 0, this.img.width, this.img.height);
 
@@ -139,7 +157,7 @@ export class MyApp extends React.Component<{}, MyAppState> {
 
     render() {
         if (this.ctx) {
-            this.draw();
+            this.drawCanvas();
         }
 
         return (
@@ -168,18 +186,20 @@ export class MyApp extends React.Component<{}, MyAppState> {
                                     <Field>
                                         <Label>Output Options:</Label>
                                         <Control>
-                                            <input style={{ width: "4em" }} type="number" value={this.state.targetSize.width}></input>x<input style={{ width: "4em" }} type="number" value={this.state.targetSize.height}></input><br />
+                                            Output size: <button onClick={this.sizeToImage}>to Img</button><br />
+                                            <input style={{ width: "4em" }} type="number" value={this.state.targetSize.width} onChange={this.changeX}></input>
+                                            x<input style={{ width: "4em" }} type="number" value={this.state.targetSize.height} onChange={this.changeY}></input><br />
                                             <br />
                                             <Checkbox onClick={this.toggleInvert} checked={this.state.invert}> Invert</Checkbox><br />
                                             <Checkbox onClick={this.toggleDither} checked={this.state.dither}> Dither</Checkbox> (<a href="https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering" target="_blank">Floyd-Steinberg</a>)<br />
-                                            <Checkbox onClick={this.toggleScaleDown} checked={this.state.scaleDown}> Scale down</Checkbox> <br />
+                                            <Checkbox onClick={this.toggleScale} checked={this.state.scale}> Scale</Checkbox> <br />
                                             <Checkbox onClick={this.toggleSimulate3Bit} checked={this.state.simulate3Bit}> Simulate 3-bit</Checkbox>
                                         </Control>
                                     </Field>
                                 </Column>
                                 <Column isSize="2/3">
-                                    <canvas width={this.state.canvasSize ? this.state.canvasSize.width : ""}
-                                        height={this.state.canvasSize ? this.state.canvasSize.height : ""}
+                                    <canvas width={this.state.targetSize ? this.state.targetSize.width : ""}
+                                        height={this.state.targetSize ? this.state.targetSize.height : ""}
                                         ref={c => {
                                             if (c) {
                                                 this.canvas = c;
@@ -203,5 +223,5 @@ export class MyApp extends React.Component<{}, MyAppState> {
                 </Container>
             </Section >
         );
-    }
+        }
 }
