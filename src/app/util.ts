@@ -39,8 +39,73 @@ export const toCode = (imgData: ImageData): string => {
     return code;
 };
 
+interface Pixel {
+    r: number;
+    g: number;
+    b: number;
+    t: number;
+}
+
 // dithering algo implemented after https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering
 export const ditherFloydSteinberg = (imgData: ImageData) => {
+    const pixel = (x: number, y: number): Pixel => {
+        const o = (y * imgData.width + x) * 4; // offset -> o
+        return {
+            r: imgData.data[o],
+            g: imgData.data[o + 1],
+            b: imgData.data[o + 2],
+            t: imgData.data[o + 3]
+        };
+    };
+
+    const setPixel = (x: number, y: number, pixel: Pixel) => {
+        const o = (y * imgData.width + x) * 4; // offset -> o
+        imgData.data[o] = pixel.r;
+        imgData.data[o + 1] = pixel.g;
+        imgData.data[o + 2] = pixel.b;
+        imgData.data[o + 3] = pixel.t;
+    };
+
+    const findClosestPaletteColor = (oldPixel: Pixel) => {
+        // assume 4 bit depth for each pixel
+        return {
+            r: (oldPixel.r >>> 4) << 4,
+            g: (oldPixel.g >>> 4) << 4,
+            b: (oldPixel.b >>> 4) << 4,
+            t: oldPixel.t
+        };
+    };
+
+    const getQuantError = (oldPixel: Pixel, newPixel: Pixel) => {
+        return {
+            r: oldPixel.r - newPixel.r,
+            g: oldPixel.g - newPixel.g,
+            b: oldPixel.b - newPixel.b,
+            t: oldPixel.t
+        };
+    };
+
+    const quantize = (pixel: Pixel, error: Pixel, mult: number, div: number) => {
+        return {
+            r: pixel.r + error.r * mult / div,
+            g: pixel.g + error.g * mult / div,
+            b: pixel.b + error.b * mult / div,
+            t: pixel.t
+        };
+    };
+
+    for (let y = 0; y < imgData.height; y++) {
+        for (let x = 0; x < imgData.width; x++) {
+            const oldPixel = pixel(x, y);
+            const newPixel = findClosestPaletteColor(oldPixel);
+            setPixel(x, y, newPixel);
+            const quantError = getQuantError(oldPixel, newPixel);
+            setPixel(x + 1, y, quantize(pixel(x + 1, y), quantError, 7, 16));
+            setPixel(x - 1, y + 1, quantize(pixel(x - 1, y + 1), quantError, 3, 16));
+            setPixel(x, y + 1, quantize(pixel(x, y + 1), quantError, 5, 16));
+            setPixel(x + 1, y + 1, quantize(pixel(x + 1, y + 1), quantError, 1, 16));
+        }
+    }
     //     for each y from top to bottom
     //    for each x from left to right
     //       oldpixel  := pixel[x][y]

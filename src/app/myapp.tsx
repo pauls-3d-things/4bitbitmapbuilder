@@ -10,8 +10,7 @@ import Section from "bloomer/lib/layout/Section";
 import Container from "bloomer/lib/layout/Container";
 import Column from "bloomer/lib/grid/Column";
 import Columns from "bloomer/lib/grid/Columns";
-import MonacoEditor, { EditorDidMount } from "react-monaco-editor";
-import { toAvgGrayScale, invert } from "./util";
+import { toAvgGrayScale, invert, ditherFloydSteinberg, toCode } from "./util";
 
 export interface Size {
     width: number;
@@ -105,17 +104,15 @@ export class MyApp extends React.Component<{}, MyAppState> {
             if (this.state.invert) {
                 invert(imgData);
             }
+            if (this.state.dither) {
+                ditherFloydSteinberg(imgData);
+            }
             toAvgGrayScale(imgData, 4);
             if (this.state.simulate3Bit) {
                 toAvgGrayScale(imgData, 5);
             }
         }
         return imgData;
-    }
-
-    editorDidMount: EditorDidMount = (editor, monaco) => {
-        console.log("editorDidMount", editor);
-        editor.focus();
     }
 
     draw() {
@@ -174,7 +171,7 @@ export class MyApp extends React.Component<{}, MyAppState> {
                                             <input style={{ width: "4em" }} type="number" value={this.state.targetSize.width}></input>x<input style={{ width: "4em" }} type="number" value={this.state.targetSize.height}></input><br />
                                             <br />
                                             <Checkbox onClick={this.toggleInvert} checked={this.state.invert}> Invert</Checkbox><br />
-                                            <Checkbox onClick={this.toggleDither} checked={this.state.dither}> Dither</Checkbox><br />
+                                            <Checkbox onClick={this.toggleDither} checked={this.state.dither}> Dither</Checkbox> (<a href="https://en.wikipedia.org/wiki/Floyd%E2%80%93Steinberg_dithering" target="_blank">Floyd-Steinberg</a>)<br />
                                             <Checkbox onClick={this.toggleScaleDown} checked={this.state.scaleDown}> Scale down</Checkbox> <br />
                                             <Checkbox onClick={this.toggleSimulate3Bit} checked={this.state.simulate3Bit}> Simulate 3-bit</Checkbox>
                                         </Control>
@@ -193,19 +190,6 @@ export class MyApp extends React.Component<{}, MyAppState> {
                                 </Column>
                             </Columns>
                         </PanelBlock>
-                    </Panel>
-                    <Panel>
-                        <PanelHeading>Code Preview</PanelHeading>
-                        <PanelBlock>
-                            <MonacoEditor
-                                width="800"
-                                height="600"
-                                language="javascript"
-                                theme="vs-light"
-                                value={this.state.code}
-                                options={{}}
-                                editorDidMount={this.editorDidMount}
-                            /></PanelBlock>
                     </Panel>
                     <div style={{ width: "1em", height: "1em", overflow: "hidden" }}>
 

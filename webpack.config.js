@@ -2,8 +2,6 @@ var path = require('path');
 const webpack = require('webpack');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
-const MONACO_DIR = path.resolve(__dirname, './node_modules/monaco-editor');
 
 var entries = {};
 
@@ -28,11 +26,6 @@ module.exports = {
                 loaders: ['ts-loader'],
                 exclude: /node_modules/,
                 include: /src/
-            },
-            {
-                test: /\.css$/,
-                include: MONACO_DIR,
-                use: ['style-loader', 'css-loader'],
             }
         ]
     },
@@ -64,10 +57,6 @@ module.exports = {
             //     from: 'some/path/here',
             //     to: 'here' // inside dist/
             // }
-        ]),
-        new MonacoWebpackPlugin({
-            // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-            languages: ['cpp']
-        })
+        ])
     ]
 };
